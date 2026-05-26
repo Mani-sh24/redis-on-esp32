@@ -1,4 +1,4 @@
-#include "wifi.hpp"
+#include "utils/wifi.hpp"
 #include <iostream>
 #include <string>
 #include <cstring>
@@ -12,7 +12,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-#include "helpers.h"
+#include "resp/deserialiser.hpp"
+#include "commands/handler.hpp"
 
 void handle_commands(int clientfd)
 {
@@ -88,8 +89,6 @@ extern "C" void app_main()
         close(server_fd);
         return;
     }
-
-    std::cout << "Redis server started on port 6379\n";
 
     while (true)
     {

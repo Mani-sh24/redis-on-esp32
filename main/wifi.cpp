@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cstring>
+#include <string>
 
 extern "C" {
 #include "freertos/FreeRTOS.h"
@@ -9,10 +10,10 @@ extern "C" {
 #include "nvs_flash.h"
 #include "esp_netif.h"
 #include "lwip/ip4_addr.h"
-#include "my_data.h"
+#include "utils/my_data.hpp"
 }
 
-#include "wifi.hpp"
+#include "utils/wifi.hpp"
 
 static void wifi_event_handler(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {

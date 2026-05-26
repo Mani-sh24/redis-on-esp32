@@ -1,4 +1,5 @@
-#include "helpers.h"
+#include "resp/deserialiser.hpp"
+#include "utils/string_helpers.hpp"
 #include <vector>
 #include <string>
 #include <iostream>
@@ -12,14 +13,7 @@ pair<RespValue, int> parse_bulk_strings(string_view text, int pos)
     if (crlf == string::npos)
         return {{}, -1};
     int len;
-    auto num = text.substr(pos, crlf - pos);
-
-    auto [ptr, ec] =
-        std::from_chars(num.data(),
-                        num.data() + num.size(),
-                        len);
-
-    if (ec != std::errc())
+    if (!parse_int(text, pos, crlf, len))
         return {{}, -1};
     if (len == -1)
     {
@@ -90,13 +84,10 @@ pair<RespValue, int> parse_integers(string_view text, int pos)
 
     RespValue result;
     result.type = RespType::INTEGER;
-    auto num = text.substr(pos, crlf - pos);
-    auto [ptr, ec] = std::from_chars(
-        num.data(),
-        num.data() + num.size(),
-        result.integer);
-    if (ec != std::errc())
+    int temp;
+    if (!parse_int(text, pos, crlf, temp))
         return {{}, -1};
+    result.integer = temp;
 
     int end = crlf + 2;
     return {result, end - original};
@@ -110,15 +101,7 @@ pair<RespValue, int> parse_array(string_view text, int pos)
         return {{}, -1};
 
     int len;
-    auto num = text.substr(pos, crlf - pos);
-
-    auto [ptr, ec] = std::from_chars(
-        num.data(),
-        num.data() + num.size(),
-        len);
-
-    if (ec != std::errc() ||
-        ptr != num.data() + num.size())
+    if (!parse_int(text, pos, crlf, len))
         return {{}, -1};
     int cursor = crlf + 2;
 
