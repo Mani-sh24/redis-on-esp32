@@ -65,6 +65,9 @@ main/
 | **INCR** | `INCR <key>` | Increments the integer value of the key by 1. Creates it as `1` if non-existent. |
 | **DECR** | `DECR <key>` | Decrements the integer value of the key by 1. Fails if the key doesn't exist. |
 | **INCRBY** | `INCRBY <key> <increment>` | Increments the key value by the specified integer amount. |
+| **MULTI** | `MULTI` | Starts a transaction block. Subsequent commands are queued. |
+| **EXEC** | `EXEC` | Executes all queued commands in the transaction and returns their results. |
+| **DISCARD** | `DISCARD` | Discards all queued commands in the transaction. |
 
 ---
 
@@ -101,3 +104,13 @@ The cache storage engine runs a FreeRTOS cleaner task at configurable intervals 
 1. When keys are set with expiry parameters (`EX`/`PX`), they are stored in a priority queue (`std::priority_queue`) ordered by the soonest expiration timepoint.
 2. The cleaner task wakes up, compares the current time against the head of the priority queue, and removes all expired items from storage.
 3. Passively, if a client tries to `GET` a key that has expired but has not been cleaned up by the background cleaner task yet, the database will identify the expiration, delete it, and return a `nil` response.
+---
+
+### Transaction Specification
+
+The database supports basic transaction operations via queuing:
+- **MULTI**: Switches the client connection to a transaction state. All subsequent commands (except `EXEC`, `DISCARD`, and nested `MULTI` calls) are queued into a transaction buffer and respond with `+QUEUED`.
+- **EXEC**: Executes all queued commands sequentially in the order they were received, returns an array of responses, and restores the client connection back to normal state.
+- **DISCARD**: Discards all queued commands in the transaction buffer and restores the connection back to normal state.
+
+---
