@@ -17,32 +17,33 @@
 
 void handle_commands(int clientfd)
 {
-    std::string accumulator;
-    char buffer[1024];
+  ClientState client;
+  client.fd = clientfd;
+  char buffer[1024];
 
-    while (true)
+  while (true)
+  {
+    ssize_t bytes = recv(clientfd, buffer, sizeof(buffer), 0);
+    if (bytes <= 0)
+      break;
+    client.accumulator.append(buffer, bytes);
+    // Parse all complete frames from the client.accumulator
+    int offset = 0;
+    while (offset < (int)client.accumulator.size())
     {
-        ssize_t bytes = recv(clientfd, buffer, sizeof(buffer), 0);
-        if (bytes <= 0)
-        {
-            std::cout << "Client disconnected\n";
-            break;
-        }
-        accumulator.append(buffer, bytes);
-        while (!accumulator.empty())
-        {
-            auto [value, consumed] = prcoess_parser(accumulator, 0);
-            std::string response = handle_value(value);
-
-            if (!response.empty())
-            {
-                int sent = send( clientfd, response.c_str(), response.size(), 0);
-            }
-            accumulator.erase(0, consumed);
-        }
+      auto [value, consumed] = prcoess_parser(client.accumulator, offset);
+      if (consumed < 0)
+        break; // incomplete frame — wait for more data
+      offset += consumed;
+      std::string response = handle_value(value , client);
+      if (!response.empty())
+        send(clientfd, response.c_str(), response.length(), 0);
     }
+    // Remove all fully processed bytes from the front
+    client.accumulator.erase(0, offset);
+  }
 
-    close(clientfd);
+  close(clientfd);
 }
 
 void client_task(void *arg)

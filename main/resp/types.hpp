@@ -24,5 +24,10 @@ struct RespValue
 
     bool is_null = false;
 };
-
+struct ClientState {
+    int fd;
+    std::string accumulator;
+    bool in_multi = false;
+    std::vector<RespValue> tx_queue;
+};
 #endif // RESP_TYPES_HPP
